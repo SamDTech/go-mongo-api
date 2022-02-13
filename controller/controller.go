@@ -2,9 +2,12 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/samdtech/go-mongo-api/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -134,4 +137,58 @@ func getAllMovies() []primitive.M {
 	defer cursor.Close(context.Background())
 
 	return movies
+}
+
+
+// actual controllers
+
+// get all movies
+func GetAllMovies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	movies := getAllMovies()
+
+	fmt.Println("all movies: ", movies)
+
+	json.NewEncoder(w).Encode(movies)
+}
+
+// create movie
+func CreateMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Allow-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var movie model.Netflix
+	_ = json.NewDecoder(r.Body).Decode(&movie)
+	insertOne(movie)
+	json.NewEncoder(w).Encode(movie)
+}
+
+func MarkAsWatched(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	// get the params
+	params := mux.Vars(r)
+
+	 UpdateOne(params["id"])
+
+	 json.NewEncoder(w).Encode("Updated Successfully")
+}
+
+func DeleteMovie(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	// get the params
+	params := mux.Vars(r)
+
+	deleteOne(params["id"])
+
+	 json.NewEncoder(w).Encode("Deleted Successfully")
+}
+
+func DeleteAllMovies(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+
+
+	deleteAll()
+
+	 json.NewEncoder(w).Encode("Deleted Successfully")
 }
